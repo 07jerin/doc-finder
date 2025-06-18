@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const doctors = require('./data/doctors');
+const { getDoctors, reloadDoctors } = require('./data/doctors');
 const { loadDoctors } = require('./loadDoctors');
 
 const app = express();
@@ -31,6 +31,9 @@ app.get('/api/doctors', (req, res) => {
   const searchName = req.query.name?.toLowerCase() || '';
   const searchSpeciality = req.query.speciality?.toLowerCase() || '';
 
+  // Get current doctors data
+  const doctors = getDoctors();
+
   // Filter doctors based on search criteria
   let filteredDoctors = doctors.filter(doctor => {
     const nameMatch = doctor.name.toLowerCase().includes(searchName);
@@ -60,6 +63,7 @@ app.get('/api/doctors', (req, res) => {
 
 // Get single doctor by ID
 app.get('/api/doctors/:id', (req, res) => {
+  const doctors = getDoctors();
   const doctor = doctors.find(d => d.id === req.params.id);
   if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
   res.json(doctor);
@@ -69,6 +73,7 @@ app.get('/api/doctors/:id', (req, res) => {
 app.post('/api/load-doctors', async (req, res) => {
   try {
     const loadedDoctors = await loadDoctors();
+    await reloadDoctors(); // Reload the doctors data after loading new data
     res.json({ 
       message: 'Doctors loaded successfully',
       count: loadedDoctors.length
